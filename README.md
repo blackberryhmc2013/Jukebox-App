@@ -12,9 +12,10 @@ An account with cloudbase can be registered at https://manage.cloudbase.io/regis
 
 Registering requires an application name and password. The details necessary to use CloudList are Application Code, Unique Code (both available on the account dashboard), and the md5 hash of the Application Password chosen during creation.
 
+
 Issues & Future Work
 ===========
-* The master branch does not support WiFi Direct, as CloudList integration seemed to interfere with WiFi Direct. Visit the nonCL branch to see a version that supports WiFi Direct, but not CloudList.
+* The nonCL branch is not yet integrated with CloudList for debugging purposes, as integration with CloudList seemed to interfere with WiFi Direct.
 * In the current version of Jukebox, the host user needs to manually load a track by selecting before playing the track. It would improve the users' experience if the application automatically loaded the tracks.
 * WiFi Direct connection request is not done in the background. Each time a new WiFi Direction connection is initiated, the BlackBerry WiFi Direct API shows a dialog, which could interfere with the users' actions.
 * During the design phase, the team considered allowing guest members to become the host of the playlist by NFC tapping with the host. This feature will be useful in a situation where the host leaves the rest of the users but wants the playlist to stay.

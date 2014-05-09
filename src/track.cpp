@@ -14,76 +14,94 @@
  */
 
 #include "track.h"
-#include <bb/data/JsonDataAccess>
-#include <QMap>
-#include <btapi/btdevice.h>
+#include <QUuid>
 
-Track::Track(const QString& pid, const QString& devName, const QUrl& file,
-		const QVariantMap& md)
-: m_playlistID(pid),
-  m_ownerPhoneName(devName),
-  m_filePath(file.toString()),
-  m_metaData(md)
+Track::Track(const QString& pid, const QString& owner, const QUrl& file, const QVariantMap& md)
+: m_playlistID(pid.toStdString()), m_removed(false),
+  m_ownerAddr(owner.toStdString()),  m_filePath(file.toString().toStdString()),
+  m_saveAs (file.toString().toStdString()), m_metaData(md)
 {
+	QUuid tid = QUuid::createUuid();
+	m_trackID = tid.toString().toStdString();
 
+	std::string pathStr = m_filePath;
+	QString path = QString(pathStr.c_str());
+	QStringList parsedPath = path.split("/", QString::SkipEmptyParts);
+
+	if (parsedPath.size() > 0) {
+		QString name = *(--parsedPath.end());
+		QStringList parsedName = name.split(".", QString::SkipEmptyParts);
+
+		if (parsedName.size() > 0) {
+			QString ext = *(--parsedName.end());
+			m_saveAs = m_trackID + "." + ext.toStdString();
+		}
+	}
 }
 
-Track::Track(const QString& strRepr)
+Track::Track(const QString& tid, bool removed)
+: m_trackID(tid.toStdString()), m_removed(removed)
 {
-	bb::data::JsonDataAccess jda;
-	QVariant data = jda.loadFromBuffer(strRepr);
-	qDebug() << data;
-	QMap<QString,QVariant> dataMap = data.toMap();
-	m_filePath = dataMap["file_path"].toString();
-	m_ownerAddr = dataMap["owner_addr"].toString();
-	m_playlistID = dataMap["playlist_id"].toString();
-
-	// Load in all the metadata
-	m_metaData.swap(dataMap);
+	// Nothing else to do
 }
 
 Track::~Track()
 {
-	// TODO Auto-generated destructor stub
+	// Nothing to do
 }
 
-
-QString Track::toString() const
+std::string Track::serialize()
 {
-	QString out = "{";
+	std::string out = "[ {";
 
 	out += "\"track_id\" : \"" + m_trackID + "\", ";
 	out += "\"playlist_id\" : \"" + m_playlistID + "\", ";
+	out += "\"removed\" : \"";
+	out += (m_removed ? "true" : "false");
+	out += "\", ";
 	out += "\"owner_addr\" : \"" + m_ownerAddr + "\", ";
-	out += "\"file_path\" : \"" + m_filePath + "\" ";
+	out += "\"file_path\" : \"" + m_filePath + "\", ";
+	out += "\"save_as\" : \"" + m_saveAs;
 
-	for (int i = 0; i < m_metaData.size(); ++i) {
-		out += ", ";
-		QString key = m_metaData.keys().at(i);
-		QString val = m_metaData[key].toString();
-		if (key == "duration") {
-			int ms = 0;
+	if (m_metaData.size() == 0) {
+		out += "\" } ]";
+	} else {
+		out += "\", ";
 
-			for (int i = 0; i < val.size(); ++i) {
-				QChar current = val[i];
-				int currentToInt = (current.isDigit()? current.digitValue() : 0);
-				ms += currentToInt*pow(10, val.size()-1-i);
+		for (int i = 0; i < m_metaData.size(); ++i) {
+			QString key = m_metaData.keys().at(i);
+			QString val = m_metaData[key].toString();
+
+			if (key == "duration") {
+				int ms = 0;
+
+				for (int i = 0; i < val.size(); ++i) {
+					QChar current = val[i];
+					int currentToInt = (current.isDigit()? current.digitValue() : 0);
+					ms += currentToInt*pow(10, val.size()-1-i);
+				}
+
+				int hr = ms/1000/60/60;
+				int min = ms/1000/60%60;
+				int sec = ms/1000%60;
+
+				QString hrStr = QString::number(hr);
+				QString minStr = QString::number(min);
+				QString secStr = QString::number(sec);
+
+				val = QString("%1:%2:%3").arg(hr < 10 ? "0" + hrStr : "" + hrStr)
+					                .arg(min < 10 ? "0" + minStr : "" + minStr)
+					                .arg(sec < 10 ? "0" + secStr : "" + secStr);
 			}
 
-			int hr = ms/1000/60/60;
-			int min = ms/1000/60%60;
-			int sec = ms/1000%60;
-
-			QString hrStr = QString::number(hr);
-			QString minStr = QString::number(min);
-			QString secStr = QString::number(sec);
-
-			val = QString("%1:%2:%3").arg(hr < 10 ? "0" + hrStr : "" + hrStr)
-								.arg(min < 10 ? "0" + minStr : "" + minStr)
-								.arg(sec < 10 ? "0" + secStr : "" + secStr);
+			if (i == m_metaData.size()-1) {
+				out += "\"" + key.toStdString() + "\" : \"" + val.toStdString() + "\" } ]";
+			} else {
+				out += "\"" + key.toStdString() + "\" : \"" + val.toStdString() + "\", ";
+			}
 		}
-		out += "\"" + key + "\" : \"" + val + "\"";
 	}
-	out += "}";
+
 	return out;
 }
+

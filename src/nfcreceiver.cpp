@@ -19,73 +19,38 @@
 #include <QtNfcSubset/QNdefRecord>
 #include <QRegExp>
 
-
 NfcReceiver::NfcReceiver(QObject* parent)
-: QObject(parent)
+: QObject(parent), m_isJukebox(false)
 {
-	// TODO Auto-generated constructor stub
-	bb::system::InvokeManager *invokeManager = new bb::system::InvokeManager(this);
+	bb::system::InvokeManager* invokeManager = new bb::system::InvokeManager(this);
 	bool ok = connect(invokeManager, SIGNAL(invoked(const bb::system::InvokeRequest&)),
-	                  this, SLOT(receivedInvokeTarget(const bb::system::InvokeRequest&)));
+			this, SLOT(receivedInvokeTarget(const bb::system::InvokeRequest&)));
 	Q_ASSERT(ok);
 	Q_UNUSED(ok);
 }
 
-NfcReceiver::~NfcReceiver() {
-	// TODO Auto-generated destructor stub
-}
-
-QString NfcReceiver::playlist_id() const
+NfcReceiver::~NfcReceiver()
 {
-	return m_pID;
-}
-
-QString NfcReceiver::playlist_name() const
-{
-	return m_pName;
-}
-
-QString NfcReceiver::host_addr() const
-{
-	return m_hostAddr;
+	// Nothing to do
 }
 
 void  NfcReceiver::receivedInvokeTarget(const bb::system::InvokeRequest& request)
 {
-	if (request.action().compare("bb.action.OPEN") != 0) {
-		return;
-	}
-
 	QByteArray data = request.data();
-	qDebug() << "XXXXXXXX Received invoke request: " << data;
+	qDebug() << "NfcReceiver: Received invoke request: " << data;
 
-    QString reg = "\\[ \\{\"host_addr\" : \"(.*)\", \"playlist_id\" : \"(.*)\", \"playlist_name\" : \"(.*)\"\\} \\]";
+    QString reg = "\\[ \\{\"is_jukebox\" : \"(.*)\", \"playlist_id\" : \"(.*)\", \"playlist_name\" : \"(.*)\"\\} \\]";
     QRegExp rx(reg);
     int pos = rx.indexIn(tr("%1").arg(data.data()));
     QStringList list = rx.capturedTexts();
 
-    m_hostAddr = list[1];
+    m_isJukebox = (list[1] == "true" ? true : false);
     m_pID = list[2];
     m_pName = list[3];
 
-    qDebug() << "host " << m_hostAddr << " pid " << m_pID << " pname " << m_pName;
+    qDebug() << m_isJukebox;
+    qDebug() << m_pID;
+    qDebug() << m_pName;
 
-    /*
-	QtMobilitySubset::QNdefMessage ndefMessage = QtMobilitySubset::QNdefMessage::fromByteArray(data);
-	m_msgRecords->clear();
-
-	for (int i = 0; i < ndefMessage.size(); ++i) {
-		QtMobilitySubset::QNdefRecord record = ndefMessage.at(i);
-
-		QVariantMap entry;
-		entry["tnfType"] = record.typeNameFormat();
-		entry["recordType"] = QString::fromLatin1(record.type());
-		entry["payload"] = QString::fromLatin1(record.payload());
-		entry["hexPayload"] = QString::fromLatin1(record.payload().toHex());
-
-		m_msgRecords->append(entry);
-		qDebug() << entry;
-	}*/
-
-	emit plistInfoReceived(m_pID, m_pName, m_hostAddr);
+	emit plistInfoReceived(m_pID, m_pName, m_isJukebox);
 }

@@ -17,13 +17,13 @@
 #define CLOUDLISTCONFIG_H_
 
 // Must match entry in bar-descriptor.xml
-#define BLACKBERRY_INVOKE_TARGET_ID "com.example.CloudListTemplate.invoke.pushA"
-#define CLOUDLIST_APP_CODE "APP_CODE"
-#define CLOUDLIST_APP_UNIQ "APP_UNIQ"
-#define CLOUDLIST_APP_MD5 "APP_PASSWORD_MD5ED"
-#define BLACKBERRY_PUSH_APP_ID "PUSH_ID"
-#define BLACKBERRY_PUSHAPI_URL "PUSH_URL"
-#define BLACKBERRY_PUSHAPI_PASSWORD "PUSH_PASS"
+#define BLACKBERRY_INVOKE_TARGET_ID "com.example.jukebox.push"
+#define CLOUDLIST_APP_CODE "muddberry"
+#define CLOUDLIST_APP_UNIQ "e854b3ba12950db29157e9ef5ad556fe"
+#define CLOUDLIST_APP_MD5  "muddclinic"
+#define BLACKBERRY_PUSH_APP_ID "4418-4a720er41954O7oy2aa31Mi09340315e198"
+#define BLACKBERRY_PUSHAPI_URL "https://cp4418.pushapi.eval.blackberry.com/"
+#define BLACKBERRY_PUSHAPI_PASSWORD "v7wCOae8"
 
 
 #endif /* CLOUDLISTCONFIG_H_ */

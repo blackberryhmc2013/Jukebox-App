@@ -20,39 +20,27 @@
 
 class NfcSender : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(QString playlistInfo WRITE setPlaylistInfo NOTIFY playlistInfoChanged)
-	Q_PROPERTY(QString dataType READ dataType WRITE setDataType NOTIFY dataTypeChanged)
-	Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
 
 public:
 	NfcSender(QObject* parent = 0);
 	virtual ~NfcSender();
 
-	bool active() const;
+public slots:
 	void setActive(bool stat);
-
-	QString playlistInfo() const;
 	void setPlaylistInfo(const QString& map);
 
-	QString dataType() const;
-	void setDataType(const QString& type);
-
-public slots:
-	void contentChanged(const QString& message, const QString& dataType);
+private slots:
     void finished(bb::system::NfcShareSuccess::Type result);
     void error(bb::system::NfcShareError::Type error);
-    void onContentChanged();
 
 signals:
 	void activeChanged();
 	void playlistInfoChanged();
-	void dataTypeChanged();
 
 private:
 	QString m_plistInfo;
-	QString m_dataType;
 	bool m_active;
-    bb::system::NfcShareManager* m_nfcShareManager;
+	bb::system::NfcShareManager* m_nfcManager;
 };
 
 #endif /* NFCSENDER_H_ */

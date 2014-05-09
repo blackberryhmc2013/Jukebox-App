@@ -17,7 +17,7 @@
 #define ApplicationUI_HPP_
 
 #include <QObject>
-#include "playlistapp.h"
+#include "playlist.h"
 
 namespace bb
 {
@@ -43,11 +43,13 @@ public:
     ApplicationUI(bb::cascades::Application *app);
     virtual ~ApplicationUI() { }
 private slots:
+	void onExiting();
     void onSystemLanguageChanged();
+
 private:
     QTranslator* m_pTranslator;
     bb::cascades::LocaleHandler* m_pLocaleHandler;
-    PlaylistApp* m_playlistApp;
+    Playlist* m_playlist;
 };
 
 #endif /* ApplicationUI_HPP_ */

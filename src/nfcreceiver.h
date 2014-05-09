@@ -16,33 +16,25 @@
 #ifndef NFCRECEIVER_H_
 #define NFCRECEIVER_H_
 
-#include <bb/cascades/QListDataModel>
 #include <bb/system/InvokeRequest>
 
 class NfcReceiver : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString playlist_id READ playlist_id CONSTANT)
-    Q_PROPERTY(QString playlist_name READ playlist_name CONSTANT)
-    Q_PROPERTY(QString host_addr READ host_addr CONSTANT)
 
 public:
 	NfcReceiver(QObject* parent = 0);
 	virtual ~NfcReceiver();
 
-	QString playlist_id() const;
-	QString playlist_name() const;
-	QString host_addr() const;
-
-public slots:
+private slots:
 	void receivedInvokeTarget(const bb::system::InvokeRequest& request);
 
 signals:
-	void plistInfoReceived(const QString& id, const QString& name, const QString& host);
+	void plistInfoReceived(const QString& id, const QString& name, bool jb);
 
 private:
 	QString m_pID;
 	QString m_pName;
-	QString m_hostAddr;
+	bool m_isJukebox;
 };
 
 #endif /* NFCRECEIVER_H_ */

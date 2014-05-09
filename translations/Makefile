@@ -1,4 +1,4 @@
-QMAKE_TARGET  = JukeBox_v2
+QMAKE_TARGET  = Jukebox
 LUPDATE       = $(QNX_HOST)/usr/bin/lupdate
 LRELEASE      = $(QNX_HOST)/usr/bin/lrelease
 

@@ -14,47 +14,35 @@
  */
 
 #include "applicationui.hpp"
-#include "playlistapp.h"
-#include "playlist.h"
 
 #include <bb/cascades/Application>
 #include <bb/cascades/QmlDocument>
 #include <bb/cascades/AbstractPane>
 #include <bb/cascades/LocaleHandler>
 
+#include "server.h"
+#include "client.h"
+#include "nfcreceiver.h"
+
 using namespace bb::cascades;
 
 ApplicationUI::ApplicationUI(bb::cascades::Application *app) :
-        QObject(app), m_playlistApp(new PlaylistApp())
+        QObject(app), m_playlist(new Playlist(this)),
+        m_pTranslator(new QTranslator(this)), m_pLocaleHandler(new LocaleHandler(this))
 {
-    // prepare the localization
-    m_pTranslator = new QTranslator(this);
-    m_pLocaleHandler = new LocaleHandler(this);
-
     bool res = QObject::connect(m_pLocaleHandler, SIGNAL(systemLanguageChanged()), this, SLOT(onSystemLanguageChanged()));
-    // This is only available in Debug builds
     Q_ASSERT(res);
-    // Since the variable is not used in the app, this is added to avoid a
-    // compiler warning
     Q_UNUSED(res);
-
-    // initial load
     onSystemLanguageChanged();
 
-    qmlRegisterType<PlaylistApp>("com.jukebox.playlist", 1, 0, "PlaylistApp");
-    qmlRegisterType<NfcSender>("com.jukebox.playlist", 1, 0, "NfcSender");
-    qmlRegisterType<NfcReceiver>("com.jukebox.playlist", 1, 0, "NfcReceiver");
-    qmlRegisterType<Playlist>("com.jukebox.playlist", 1, 0, "Playlist");
+    app->setAutoExit(false);
+	bool manualExit = QObject::connect(app, SIGNAL(manualExit()), this, SLOT(onExiting()));
+	Q_ASSERT(manualExit);
+	Q_UNUSED(manualExit);
 
-    // Create scene document from main.qml asset, the parent is set
-    // to ensure the document gets destroyed properly at shut down.
     QmlDocument *qml = QmlDocument::create("asset:///main.qml").parent(this);
-    qml->setContextProperty("_playlistApp", m_playlistApp);
-
-    // Create root object for the UI
+    qml->setContextProperty("_playlist", m_playlist);
     AbstractPane *root = qml->createRootObject<AbstractPane>();
-
-    // Set created root object as the application scene
     app->setScene(root);
 }
 
@@ -63,8 +51,15 @@ void ApplicationUI::onSystemLanguageChanged()
     QCoreApplication::instance()->removeTranslator(m_pTranslator);
     // Initiate, load and install the application translation files.
     QString locale_string = QLocale().name();
-    QString file_name = QString("JukeBox_v2_%1").arg(locale_string);
+    QString file_name = QString("WiFiDirectApp_%1").arg(locale_string);
     if (m_pTranslator->load(file_name, "app/native/qm")) {
         QCoreApplication::instance()->installTranslator(m_pTranslator);
     }
+}
+
+void ApplicationUI::onExiting()
+{
+	delete m_playlist;
+	m_playlist = NULL;
+	QCoreApplication::instance()->quit();
 }

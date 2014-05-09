@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 import bb.cascades 1.2
+import bb.system 1.2
 
 Page {
     Container {
@@ -35,12 +36,11 @@ Page {
             
             horizontalAlignment: HorizontalAlignment.Center
             
-            ImageButton {
+            ImageView {
                 id: tapToJoinBtn
-                defaultImageSource: "asset:///buttons/tap.png"
-                //pressedImageSource: "asset:///buttons/tapp.png"
-                
+                imageSource: "asset:///buttons/tap.png"            
                 verticalAlignment: VerticalAlignment.Center
+                
             }
         }
         
@@ -69,19 +69,40 @@ Page {
                 id: createBtn
                 defaultImageSource: "asset:///buttons/create.png"
                 pressedImageSource: "asset:///buttons/createp.png"
-                
                 verticalAlignment: VerticalAlignment.Center
                 
                 onClicked: {
-                    addNewPlist.open();
+                    newPlaylist.show();
                 }
             }
         }
     }
     
     attachedObjects: [
-        NewPlaylistSheet {
-            id: addNewPlist
+        SystemPrompt {
+            id: newPlaylist
+            title: "New Playlist"
+            body: "Enter a name."
+            confirmButton.enabled: true
+            customButton.enabled: false
+            inputField.inputMode: SystemUiInputMode.Default
+            returnKeyAction: SystemUiReturnKeyAction.Submit
+            dismissAutomatically: true
+            emoticonsEnabled: true
+            includeRememberMe: false
+            rememberMeChecked: false
+            onFinished: {
+                if (result == SystemUiResult.ConfirmButtonSelection) {
+                    _playlist.create(inputFieldTextEntry());
+                    var page = playlistPageDef.createObject();
+                    navigationPane.push(page);
+                }
+            }
+        },
+        
+        ComponentDefinition {
+                    id: playlistPageDef
+                    source: "asset:///PlaylistPage.qml"
         }
     ]
 }

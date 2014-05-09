@@ -14,40 +14,31 @@
  */
 
 import bb.cascades 1.2
-import com.jukebox.playlist 1.0
 
 NavigationPane {
     id: navigationPane
-    
-    //TrackListPage {
-
-    //}
     
     IntroPage {
         
     }
     
     onCreationCompleted: {
-        _playlistApp.receiver.plistInfoReceived.connect(onPlistInfoReceived);
+        _playlist.newPlaylist.connect(onNewPlaylist);
     }
     
-    function onPlistInfoReceived(id, name, host) {
-        var page = trackListPageDef.createObject();
-        page.playlist_id = id;
-        page.playlist_name = name;
-        page.host_addr = host;
+    function onNewPlaylist() {
+        var page = playlistPageDef.createObject();
         navigationPane.push(page);
     }
     
     attachedObjects: [
         ComponentDefinition {
-            id: trackListPageDef
-            source: "TrackListPage.qml"
+            id: playlistPageDef
+            source: "PlaylistPage.qml"
         }
     ]
-
+    
     onPopTransitionEnded: {
-        // Destroy the popped Page once the back transition has ended.
         page.destroy();
     }
 }

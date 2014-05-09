@@ -127,7 +127,8 @@ private:
 template <typename T>
 CloudList<T>::CloudList(QString dbName) : databaseName(dbName) {
 	 helper = new Cloudbase::CBHelper(CLOUDLIST_APP_CODE, CLOUDLIST_APP_UNIQ);
-	 helper->setPassword(CLOUDLIST_APP_MD5);
+	 QString pw = QString(QCryptographicHash::hash(CLOUDLIST_APP_MD5, QCryptographicHash::Md5).toHex());
+	 helper->setPassword(pw.toStdString());
 	 helper->logEvent("Connected from cloudlist","General");
 
 	 pushService = new bb::network::PushService(BLACKBERRY_PUSH_APP_ID,

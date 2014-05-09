@@ -18,7 +18,6 @@ import bb.cascades 1.2
 Page {
     id: trackPage
     
-    //property variant playlist
     property variant tItem
     
     titleBar: TitleBar {

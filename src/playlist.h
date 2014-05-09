@@ -16,77 +16,122 @@
 #ifndef PLAYLIST_H_
 #define PLAYLIST_H_
 
-#include <bb/cascades/QListDataModel>
 #include <bb/device/WiFiDirect>
-#include <bb/device/WiFiDirectResult>
-#include <bb/device/WiFiDirectDeviceType>
-#include <bb/device/WiFiDirectWpsMethod>
-#include <bb/device/WiFiDirectIntent>
-#include <bb/device/WiFiDirectConnectionState>
-#include <cloudList/CloudList.h>
+#include <bb/cascades/QListDataModel>
 
+#include "CBHelper.h"
+#include "server.h"
+#include "client.h"
 #include "nfcsender.h"
-#include "track.h"
-#include "wifidirect/wdhandler.h"
-#include "wifidirect/WDListener.h"
+#include "nfcreceiver.h"
 
-using namespace bb::cascades;
+typedef bb::cascades::QListDataModel<QVariantMap> QMapListModel;
 
-class Playlist : public bb::cascades::QListDataModel<QVariantMap> {
+class Playlist : public QObject, Cloudbase::CBHelperResponder {
 	Q_OBJECT
 
-	Q_PROPERTY(QString pID READ pID WRITE setPID NOTIFY pIDChanged)
-	Q_PROPERTY(QString pName READ pName WRITE setPName NOTIFY pNameChanged)
-	Q_PROPERTY(QString hostAddr READ hostAddr WRITE setHostAddr NOTIFY hostAddrChanged)
+	Q_PROPERTY(QString myAddr READ myAddr CONSTANT)
+	Q_PROPERTY(QString dataFolder READ dataFolder CONSTANT)
+
+	Q_PROPERTY(QString playlistID READ playlistID WRITE setPlaylistID NOTIFY playlistIDChanged)
+	Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+	Q_PROPERTY(bool stat READ stat WRITE setStat NOTIFY statChanged)
+
+	Q_PROPERTY(bb::cascades::DataModel* model READ model NOTIFY modelChanged)
+	Q_PROPERTY(NfcReceiver* receiver READ receiver)
+
 public:
-	Playlist();
-	Playlist(const QString& id);
-	Playlist(const QString& id, const QString& name, const QString& host);
-	void cbSetup();
-	~Playlist();
+	Playlist(QObject* parent = 0);
+	virtual ~Playlist();
 
-	QString resultToText(bb::device::WiFiDirectResult::Type result);
+	void setPlaylistID(const QString& id);
+	void setName(const QString& name);
+	void setStat(bool b);
 
-	QString pID() const { return m_pID; }
-	QString pName() const { return m_pName; }
-	QString hostAddr() const { return m_hostAddr; }
-
-	void setPID(const QString& id);
-	void setPName(const QString & name);
-	void setHostAddr(const QString & addr);
+	void parseResponse(Cloudbase::CBHelperResponseInfo resp);
 
 public slots:
-	void remove();
+	void create(const QString& name);
+	void refresh();
 	void leave();
 	void addTrack(const QUrl& path, const QVariantMap& md);
+	void deleteTrack(const QString& item);
 	QVariant pop();
-	void loadTrack(int num);
-	void onTrackLoaded(const QString& id, const QString& path);
-	void addMember();
+
+	void loadFirstTrack();
+	void loadTrack(const QVariant& item);
+	void scan();
+	void requestConnect(const QString& hardwareAddress);
+	void readyClient();
+	void readyServer();
+	void disconnect();
+
+private slots:
+	void onPlaylistInfoChanged();
+	void onPlistInfoReceived(const QString& id, const QString name, bool stat);
+	void onTrackReceived();
+
+	void scanCompleted();
+	void deviceFound(const QString& name, const QString& hardwareAddress, bb::device::WiFiDirectDeviceType::Type type);
+	void deviceLost(const QString& hardwareAddress);
+	void sessionStarted(const QString& sessionName);
+	void sessionStopped();
+	void deviceConnected (const QString& name, const QString& hardwareAddress, bb::device::WiFiDirectDeviceType::Type type,
+		const QString& ipAddress, bb::device::WiFiDirectIntent::Type intent);
+	void deviceDisconnected (const QString& hardwareAddress);
+	void serverClientError(QAbstractSocket::SocketError err);
 
 signals:
-	void pIDChanged();
-	void pNameChanged();
-	void hostAddrChanged();
+	void playlistIDChanged();
+	void nameChanged();
+	void statChanged();
+
+	void modelChanged();
+	void serverReady();
+	void clientReady();
+
+	void socketError(const QString& err);
+	void wifiDirectError(const QString& err);
+
+	void newPlaylist();
 
 private:
-	QString m_devName;
+	QString myAddr() const;
+	QString dataFolder() const;
+	QString playlistID() const;
+	QString name() const;
+	bool stat() const;
+	bb::cascades::DataModel* model() const;
+	Server* server() const;
+	Client* client() const;
+	NfcReceiver* receiver() const;
 
-	QString m_collection;
-	QString m_hostAddr;
-	QString m_pID;
-	QString m_pName;
+	int getmacaddr(char* ifname, char* macaddrstr);
+	void deleteTracks(Cloudbase::CBHelperSearchCondition* cond);
+	void wifiDirectResult(bb::device::WiFiDirectResult::Type result);
+	void showErrorToast(const QString& err);
 
-	QList<QVariantMap> m_deviceList;
-	QString m_sessionName;
-	QString m_IPAddr;
+	QString m_myAddr;
+	QString m_playlistID;
+	QString m_name;
+	bool m_stat;
 
-	CloudList<Track> tracks_;
-	WDHandler* m_wdhandler;
-	WDListener* m_wdlistener;
-private slots:
-	void onItemAdded(int index);
-	void onItemDeleted(int index);
+	bb::device::WiFiDirect* m_direct;
+	QMapListModel* m_model;
+	Client* m_client;
+	Server* m_server;
+	QString m_session;
+	QString m_ipAddr;
+	quint16 m_port;
+
+	NfcSender* m_sender;
+	NfcReceiver* m_receiver;
+
+	Cloudbase::CBHelper* m_helper;
+	std::string m_collection;
+
+	QVariant m_loadingTrack;
+	QString m_dataFolder;
 };
 
 #endif /* PLAYLIST_H_ */
